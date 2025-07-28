@@ -6,9 +6,18 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
 
-local ChatEvent = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents"):WaitForChild("SayMessageRequest")
-ChatEvent:FireServer("Ring by Zelnka22", "All")
+-- Send message to chat "Ring by Zelnka22"
+LocalPlayer.Chatted:Connect(function()
+    -- doing nothing to prevent multiple messages if already
+end)
+game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
+    Text = "Ring by Zelnka22";
+    Color = Color3.fromRGB(200, 200, 200);
+    Font = Enum.Font.Fondamento;
+    FontSize = Enum.FontSize.Size24;
+})
 
+-- GUI Creation
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RingPartsGUI"
 ScreenGui.ResetOnSpawn = false
