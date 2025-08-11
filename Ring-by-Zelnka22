@@ -3,19 +3,21 @@ based on reyfield   :-)
 Zelnka22           (^_^)
 ]]
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local Head = Character:WaitForChild("Head")
-
-game:GetService("Chat"):Chat(Head, "ring by Zelnka22", Enum.ChatColor.Blue)
-
 local StarterGui = game:GetService("StarterGui")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local HttpService = game:GetService("HttpService")
+StarterGui:SetCore("ChatMakeSystemMessage", {
+    Text = "ring by Zelnka22";
+    Color = Color3.fromRGB(200, 200, 200);
+    Font = Enum.Font.Fondamento;
+    FontSize = Enum.FontSize.Size24;
+})
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
 
 local configFile = "RingPartsConfig.txt"
 local config = {
@@ -87,6 +89,48 @@ Workspace.DescendantAdded:Connect(function(part)
     tryAddPart(part)
 end)
 
+local Attachment1 = Instance.new("Attachment")
+Attachment1.Parent = workspace.Terrain -- чтобы не было на персонаже
+
+RunService.Heartbeat:Connect(function()
+    if not ringPartsEnabled then return end
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local center = hrp.Position
+
+    Attachment1.WorldPosition = center
+
+    for i = #parts, 1, -1 do
+        local part = parts[i]
+        if not part or not part.Parent or not isValidPart(part) then
+            table.remove(parts, i)
+        else
+            local pos = part.Position
+            local horizontalOffset = Vector3.new(pos.X - center.X, 0, pos.Z - center.Z)
+            local dist = horizontalOffset.Magnitude
+            local angle = math.atan2(pos.Z - center.Z, pos.X - center.X)
+            local newAngle = angle + math.rad(config.rotationSpeed)
+
+            local targetRadius = math.min(config.radius, dist)
+            local targetX = center.X + math.cos(newAngle) * targetRadius
+            local targetZ = center.Z + math.sin(newAngle) * targetRadius
+
+            local verticalOffset = pos.Y - center.Y
+            local targetY = center.Y + math.clamp(verticalOffset, -config.height, config.height)
+
+            local targetPos = Vector3.new(targetX, targetY, targetZ)
+            local direction = (targetPos - pos)
+
+            if direction.Magnitude > 0 then
+                local velocity = direction.Unit * config.attractionStrength
+                velocity = Vector3.new(velocity.X, math.clamp(velocity.Y, -50, 50), velocity.Z)
+                part.Velocity = velocity
+            end
+        end
+    end
+end)
+
 RingTab:CreateToggle({
     Name = "Включить кольцо",
     CurrentValue = ringPartsEnabled,
@@ -147,41 +191,6 @@ RingTab:CreateSlider({
         saveConfig()
     end
 })
-
-RunService.Heartbeat:Connect(function()
-    if not ringPartsEnabled then return end
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    local center = hrp.Position
-
-    for i = #parts, 1, -1 do
-        local part = parts[i]
-        if not part or not part.Parent or not isValidPart(part) then
-            table.remove(parts, i)
-        else
-            local pos = part.Position
-            local distVector = Vector3.new(pos.X - center.X, 0, pos.Z - center.Z)
-            local dist = distVector.Magnitude
-            local angle = math.atan2(pos.Z - center.Z, pos.X - center.X)
-            local newAngle = angle + math.rad(config.rotationSpeed)
-            local targetX = center.X + math.cos(newAngle) * math.min(config.radius, dist)
-            local targetZ = center.Z + math.sin(newAngle) * math.min(config.radius, dist)
-
-            local yOffset = (pos.Y - center.Y)
-            local targetY = center.Y + math.clamp(yOffset, -config.height, config.height)
-
-            local targetPos = Vector3.new(targetX, targetY, targetZ)
-            local direction = (targetPos - pos)
-
-            if direction.Magnitude > 0 then
-                local velocity = direction.Unit * config.attractionStrength
-                velocity = Vector3.new(velocity.X, math.clamp(velocity.Y, -50, 50), velocity.Z)
-                part.Velocity = velocity
-            end
-        end
-    end
-end)
 
 AdditionalTab:CreateButton({
     Name = "No Fall",
